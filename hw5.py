@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pathlib
 from typing import Union
+import os.path as path
 
 
 class QuestionnaireAnalysis:
@@ -12,15 +13,20 @@ class QuestionnaireAnalysis:
     """
     
     def __init__(self, data_fname: Union[pathlib.Path, str]):
-        self.file_name = data_fname
-        self.data = self.read_data()
+        if not path.exists(data_fname):
+            raise ValueError
+        if type(data_fname) == str:
+            self.data_fname = pathlib.Path(data_fname)
+        else:
+            self.data_fname = data_fname
+        self.data = None
 
     def read_data(self):
         """
         Reads the json data located in self.data_fname into memory, to
         the attribute self.data.
         """
-        return pd.read_json(self.file_name)
+        self.data = pd.read_json(self.data_fname)
 
     def show_age_distrib(self):
         """
@@ -42,10 +48,11 @@ class QuestionnaireAnalysis:
         Returns the corrected DataFrame, i.e. the same table but with
         the erroneous rows removed and the (ordinal) index after a reset.
         """
-        email_reg = '.+@.+(.).+'
-        self.data = self.data[self.data['email'].str.contains(email_reg)]
-        truth = pd.read_csv(r'tests_data\q2_email.csv')
-        [print(i, j) for i, j in zip(self.data['email'], truth['email']) if not i == j]
+        email_reg = r'.+@.+\..+'
+        self.data = self.data[
+            self.data['email'].str.contains(email_reg)
+        ]
+        self.data = self.data.reset_index()
         return self.data
 
     def fill_na_with_mean(self) -> Union[pd.DataFrame, np.ndarray]:
@@ -77,5 +84,7 @@ class QuestionnaireAnalysis:
 
 
 if __name__ == '__main__':
-    qa = QuestionnaireAnalysis('data.json')
-    qa.remove_rows_without_mail()
+    #qa = QuestionnaireAnalysis('data.json')
+    #qa.remove_rows_without_mail()
+    import test_qs
+    test_qs.test_email_validation()
